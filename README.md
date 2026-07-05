@@ -1,3 +1,18 @@
+<p align="center">
+  <img src="assets/rayobrowse.png" alt="rayobrowse">
+</p>
+
+<p align="center">
+  <a href="https://pypi.org/project/rayobrowse/"><img src="https://img.shields.io/pypi/v/rayobrowse" alt="PyPI"></a>
+  <a href="https://www.npmjs.com/package/rayobrowse"><img src="https://img.shields.io/npm/v/rayobrowse" alt="npm"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+  <a href="https://github.com/rayobyte-data/rayobrowse"><img src="https://img.shields.io/github/last-commit/rayobyte-data/rayobrowse" alt="Last Commit"></a>
+  <br>
+  <a href="https://github.com/rayobyte-data/rayobrowse"><img src="https://img.shields.io/github/stars/rayobyte-data/rayobrowse" alt="Stars"></a>
+  <a href="https://pypi.org/project/rayobrowse/"><img src="https://img.shields.io/pepy/dt/rayobrowse?label=pypi&logo=pypi&logoColor=white" alt="PyPI Downloads"></a>
+  <a href="https://www.npmjs.com/package/rayobrowse"><img src="https://img.shields.io/npm/dt/rayobrowse?label=npm&logo=npm&logoColor=white" alt="npm Downloads"></a>
+</p>
+
 *A self-hosted Chromium stealth browser for web scraping and automation.*
 
 [Docs](https://docs.rayobrowse.com) · [Quick Start](#quick-start) · [Fingerprints](#what-rayobrowse-handles) · [Self-Hosted and Cloud](#self-hosted-and-cloud)
