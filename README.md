@@ -1,26 +1,6 @@
-<p align="center">
-  <img src="assets/rayobrowse.png" alt="rayobrowse">
-</p>
+*A self-hosted Chromium stealth browser for web scraping and automation.*
 
-<p align="center">
-  <a href="https://pypi.org/project/rayobrowse/"><img src="https://img.shields.io/pypi/v/rayobrowse" alt="PyPI"></a>
-  <a href="https://www.npmjs.com/package/rayobrowse"><img src="https://img.shields.io/npm/v/rayobrowse" alt="npm"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
-  <a href="https://github.com/rayobyte-data/rayobrowse"><img src="https://img.shields.io/github/last-commit/rayobyte-data/rayobrowse" alt="Last Commit"></a>
-  <br>
-  <a href="https://github.com/rayobyte-data/rayobrowse"><img src="https://img.shields.io/github/stars/rayobyte-data/rayobrowse" alt="Stars"></a>
-  <a href="https://pypi.org/project/rayobrowse/"><img src="https://img.shields.io/pepy/dt/rayobrowse?label=pypi&logo=pypi&logoColor=white" alt="PyPI Downloads"></a>
-  <a href="https://www.npmjs.com/package/rayobrowse"><img src="https://img.shields.io/npm/dt/rayobrowse?label=npm&logo=npm&logoColor=white" alt="npm Downloads"></a>
-</p>
-
-<p align="center">
-  <a href="https://docs.rayobrowse.com">Docs</a> ·
-  <a href="#quick-start">Quick Start</a> ·
-  <a href="#what-rayobrowse-handles">Fingerprints</a> ·
-  <a href="#self-hosted-and-cloud">Self-Hosted and Cloud</a>
-</p>
-
-<h3 align="center">Self-hosted Chromium stealth browser for web scraping and automation.</h3>
+[Docs](https://docs.rayobrowse.com) · [Quick Start](#quick-start) · [Fingerprints](#what-rayobrowse-handles) · [Self-Hosted and Cloud](#self-hosted-and-cloud)
 
 rayobrowse is a Chromium-based browser built to look like a real user in
 server-side automation. It gives each session a coherent fingerprint across
@@ -81,8 +61,76 @@ The browser is cleaned up when the CDP session closes. For long-running
 sessions, reconnects, and explicit lifecycle control, use the SDK or the
 session management APIs.
 
-For SDKs, session reuse, VNC, proxies, and integration guides, use
+For SDKs, session reuse, proxies, and integration guides, use
 [docs.rayobrowse.com](https://docs.rayobrowse.com).
+
+### `/connect` parameters
+
+`/connect` accepts these query params in addition to `os`, `headless`, and
+`vnc` shown above:
+
+| Param                 | Type      | Description                                                                                                                                                                    |
+| --------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proxy`                | string    | `http://user:pass@host:port`                                                                                                                                                 |
+| `ignore_https_errors`  | bool      | Ignore invalid/expired/self-signed TLS certs (uses CDP under the hood).                                                                                                       |
+| `ip_service`           | string    | Custom IP-lookup URL used to derive timezone/locale instead of the built-in provider rotation. A bare hostname (no `http(s)://`) is automatically treated as `https://`.      |
+| `vnc`                  | bool      | Start a live noVNC viewer for the session. Returned in the `x-vnc-url` response header, always on a stable `:6080`, token-protected.                                          |
+| `vnc_no_auth`          | bool      | Requires `vnc=true`. Skips the token-protected route and exposes the viewer on its own dedicated port with **no authentication at all**. Opt-in only — see warning below.     |
+| `extension`            | string    | Path to an unpacked extension directory to load (must already be mounted into the container in Docker mode). Comma-separate multiple paths. See below.                        |
+| `sessionId`            | string    | Reconnect to an existing browser instead of creating a new one.                                                                                                                |
+| `keepAlive`            | bool      | Keep the browser alive after the CDP connection drops (skip auto-cleanup).                                                                                                     |
+| `maxLifetime`          | int       | Max seconds the browser may live, regardless of activity.                                                                                                                       |
+
+```python
+# Ignore HTTPS errors + use a custom IP lookup service
+r = httpx.get(
+    "http://localhost:9222/connect",
+    params={
+        "os": "windows",
+        "ignore_https_errors": "true",
+        "ip_service": "https://api64.ipify.org",
+    },
+    timeout=120,
+)
+```
+
+> **`vnc_no_auth` warning:** anyone who can reach the exposed port gets full
+> view/control of that browser session with no login of any kind. Only use
+> this on a trusted network (e.g. an SSH tunnel or a private VPC) — never
+> expose it directly to the public internet.
+
+### Loading a browser extension
+
+Mount your unpacked extension into the container, then point `/connect` at
+the mounted path with `extension=`:
+
+```yaml
+# docker-compose.yml
+services:
+  rayobrowse:
+    volumes:
+      - /local/path/to/addon:/addon:ro
+```
+
+```python
+r = httpx.get(
+    "http://localhost:9222/connect",
+    params={"os": "windows", "headless": "false", "extension": "/addon"},
+    timeout=120,
+)
+r.raise_for_status()
+cdp_url = r.text.strip()
+
+with sync_playwright() as p:
+    browser = p.chromium.connect_over_cdp(cdp_url)
+    context = browser.contexts[0] if browser.contexts else browser.new_context()
+    # Confirm the extension loaded via its background service worker
+    print([sw.url for sw in context.service_workers])
+    browser.close()
+```
+
+Pass multiple comma-separated paths (`extension=/addon1,/addon2`) to load more
+than one extension.
 
 ## Detection Coverage
 
@@ -98,11 +146,7 @@ test suites.
 | demo.fingerprint.com/playground | ✅                                          |
 | BrowserScan                     | ✅                                          |
 | PixelScan                       | ✅                                          |
-
-
-<p align="center">
-  <img src="assets/fingerprintcom.png" alt="rayobrowse passing the Fingerprint.com playground">
-</p>
+| CDP clients                     | ✅ Playwright, Puppeteer, Selenium, raw CDP |
 
 
 ## What rayobrowse handles
@@ -156,19 +200,55 @@ Self-hosted rayobrowse is free and unlimited. Run it on your own machines, use
 your own proxies, and get the same core stealth engine in every release. Local
 use does not require registration.
 
-rayobrowse Cloud is for teams that want the same `/connect` workflow without
-owning the browser fleet. At scale, browsers are expensive to manage: you need
-servers, proxy capacity, orchestration, queueing, monitoring, updates, zombie
-cleanup, debugging tools, and engineers to keep the whole system healthy.
+rayobrowse Cloud is in early access for teams that want managed scaling,
+orchestration, proxy integration, VNC access, observability, and fewer browser
+fleet problems to own. The local and cloud connection model is intentionally
+the same: call `/connect`, receive a CDP URL, automate the browser.
 
-Cloud takes that operational work off your plate with managed browser capacity,
-proxy integration, VNC access, observability, and automatic updates. You call
-`/connect`, receive a CDP URL, and automate the browser the same way you do
-locally.
+At scale, running browsers well means servers, proxies, updates, monitoring,
+zombie cleanup, queueing, and debugging tools. We have optimized that stack so
+managed rayobrowse Cloud should be cheaper for many teams than building and
+maintaining their own fleet.
 
-For the detailed self-hosted and Cloud comparison, read
+
+|                                                                                                    | Self-Hosted (Free)                                           | Cloud                       |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------- |
+| **Core Browser Engine**                                                                            |                                                              |                             |
+| Full stealth engine (50+ spoofed signals)                                                          | ✅                                                            | ✅                           |
+| Fingerprint spoofing (UA, WebGL, Canvas, fonts, timezone, audio, and more) from real-world devices | ✅                                                            | ✅                           |
+| Patent-pending Canvas Fingerprint Spoofing with real canvas data instead of detectable noise       | ❌ Uses noise-based canvas spoofing, works on 90% of websites | ✅ Real canvas profiles      |
+| CDP compatible: Playwright, Puppeteer, Selenium, and more                                          | ✅                                                            | ✅                           |
+| Desktop fingerprints: Windows, Linux, macOS                                                        | ✅                                                            | ✅                           |
+| Headless and headful modes                                                                         | ✅                                                            | ✅                           |
+| Proxy support                                                                                      | ✅ Bring your own                                             | ✅ Managed or bring your own |
+| Human mouse movement                                                                               | ✅                                                            | ✅                           |
+| **Infrastructure and Operations**                                                                  |                                                              |                             |
+| Central dashboard: start, stop, VNC view, traffic usage, and more                                  | ❌                                                            | ✅                           |
+| Orchestration: auto-scaling, zombie cleanup, OOM protection                                        | ❌                                                            | ✅                           |
+| Session queuing at capacity                                                                        | ❌                                                            | ✅                           |
+| Automatic engine and software updates                                                              | ❌                                                            | ✅                           |
+| **Proxy and Network**                                                                              |                                                              |                             |
+| Managed proxy: datacenter, ISP, and residential                                                    | ❌                                                            | ✅                           |
+| Proxies tuned for browser sessions                                                                 | ❌                                                            | ✅                           |
+| **Monitoring and Debugging**                                                                       |                                                              |                             |
+| Live VNC from anywhere                                                                             | ❌                                                            | ✅                           |
+| Usage analytics and cost reporting                                                                 | ❌                                                            | ✅                           |
+| Budget and proxy cost alerts                                                                       | ❌                                                            | Soon                        |
+| Session replay                                                                                     | ❌                                                            | Soon                        |
+| Remote DevTools                                                                                    | ❌                                                            | Soon                        |
+| **Advanced Features**                                                                              |                                                              |                             |
+| Real-world fingerprints captured like anti-bot vendors capture them                                | ✅ Limited set                                                | ✅ Tens of thousands         |
+| Android mobile fingerprints                                                                        | ❌                                                            | ✅                           |
+| Persistent browser profiles                                                                        | ❌                                                            | Beta                        |
+| Smart Cache                                                                                        | ❌                                                            | Soon                        |
+| **Collaboration**                                                                                  |                                                              |                             |
+| Team accounts with role-based access                                                               | ❌                                                            | Soon                        |
+| Audit logs                                                                                         | ❌                                                            | Soon                        |
+
+
+Cloud is currently in early access. Read
 [docs.rayobrowse.com](https://docs.rayobrowse.com) or contact
-[sales@rayobyte.com](mailto:sales@rayobyte.com) for early access.
+[sales@rayobyte.com](mailto:sales@rayobyte.com) if you want access.
 
 ## License
 
@@ -177,8 +257,8 @@ licensed. The rayobrowse Browser Binary has a separate license that allows most
 commercial and hobby use, while restricting illegal or unethical use and
 certain commercial resale categories.
 
-See [LICENSE](LICENSE) and
-[BROWSER_BINARY_LICENSE.md](BROWSER_BINARY_LICENSE.md).
+See `[LICENSE](LICENSE)` and
+`[BROWSER_BINARY_LICENSE.md](BROWSER_BINARY_LICENSE.md)`.
 
 ## Legal and Ethics
 

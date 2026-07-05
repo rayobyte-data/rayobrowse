@@ -1,5 +1,43 @@
 # Changelog
 
+## [Fixes] - 2026-07-05
+
+### Fixed
+
+- **Major stealth improvement** — addressed increased detection signals from demo.fingerprint.com/playground to significantly improve fingerprint coverage.
+- **No more crashes from port-scan probes (Issue #6)** — some websites probe `localhost:9222` directly, which could crash the entire browser process. A new origin-check middleware now rejects those requests before they can do any damage. No configuration changes required.
+- **`console.log()` output restored** — console messages were silently swallowed under CDP world isolation; logging now works as expected.
+- **`ignore_https_errors` now works in daemon mode (Issue #4)** — this option was previously accepted but silently dropped. It's now fully wired through and applies via CDP's `Security.setIgnoreCertificateErrors`.
+
+### Added
+
+- **Custom IP lookup service (Issue #5)** — you can use your own custom IP checking service with any URL that returns your IP as plain text, useful for avoiding rate limits or for privacy. A hostname without a scheme is automatically prefixed with `https://`. See README.
+- **Extension loading via the daemon (Issue #4)** — two supported paths:
+  - Local/native mode: pass extension paths through `--load-extension` in `launch_args`.
+  - Docker mode: mount the extension directory (`docker -v /local/addon:/addon`), then reference the mounted path.
+- **Stable VNC port** — VNC no longer increments across ports (`6080`, `6081`, `6082`, ...). It's always served on `:6080` with a token-based URL. A `vnc` parameter was also added to `create_browser()` for convenience.
+- **Optional unauthenticated VNC** — pass `vnc_no_auth=true` alongside `vnc=true` to skip the token-protected route entirely and get back a VNC URL on a dedicated port with no protection at all. Opt-in only; the default `vnc=true` behavior (stable, token-protected `:6080`) is unchanged.
+
+---
+
+## [Chromium 146.0.7680.219] - 2026-07-05
+
+### Changed
+
+- **Chromium updated to 146.0.7680.219** — both `linux/amd64` and `linux/arm64` Docker images rebuilt with Chromium v146 build 18.
+  Pull: `docker pull rayobyte/rayobrowse:latest` or pin with `rayobyte/rayobrowse:chromium-146`.
+
+---
+
+## [Chromium 146.0.7680.169] - 2026-06-29
+
+### Changed
+
+- **Chromium updated to 146.0.7680.169** — both `linux/amd64` and `linux/arm64` Docker images rebuilt with Chromium v146 build 16.
+  Pull: `docker pull rayobyte/rayobrowse:latest` or pin with `rayobyte/rayobrowse:chromium-146`.
+
+---
+
 ## [0.2.2] - 2026-05-22
 
 ### Changed
