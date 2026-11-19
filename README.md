@@ -13,6 +13,27 @@
   <a href="https://www.npmjs.com/package/rayobrowse"><img src="https://img.shields.io/npm/dt/rayobrowse?label=npm&logo=npm&logoColor=white" alt="npm Downloads"></a>
 </p>
 
+> [!IMPORTANT]
+> ## A note on rayobrowse releases
+>
+> We apologize for the silence on this repo for the past few months. After much discussion, we have decided to pause new releases on rayobrowse.
+>
+> Earlier this year we identified 3 cases that gave us concern about supporting a public browser:
+>
+> 1. An employee from one of the top search engines joined one of our anti-scraping webinars about our browser.
+> 2. An employee from one of the top anti-bot companies joined another browser webinar.
+> 3. We detected on that anti-bot company's solution that they most likely put in blocking intentionally aimed at rayobrowse.
+>
+> Originally we believed we could keep up with this race, but with AI being as fast as it is, and the anti-bot companies having special security clearance to do anti-bot work, their AI and their resources were faster than ours. So, with a sad heart, we move to close-sourced.
+>
+> You may continue using your existing rayobrowse build in the meantime. For new builds, which include many stealth updates, you can sign up a free account at https://app.rayobyte.com/ and use 48 hours for free.
+>
+> To the anti-bot employees: our TOS strictly forbids your access to our systems, and our [LICENSE.md](BROWSER_BINARY_LICENSE.md) already prohibited it, so we will come knocking if you sign up with your email :).
+>
+> Thank you all for the support!
+>
+> **- Neil, CEO Rayobyte**
+
 *A self-hosted Chromium stealth browser for web scraping and automation.*
 
 [Docs](https://docs.rayobrowse.com) · [Quick Start](#quick-start) · [Fingerprints](#what-rayobrowse-handles) · [Self-Hosted and Cloud](#self-hosted-and-cloud)
